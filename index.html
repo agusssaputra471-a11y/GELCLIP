@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClipForge</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0b0d12;
+      color: white;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: auto;
+      padding: 20px 14px 40px;
+    }
+
+    h1 {
+      margin-bottom: 5px;
+    }
+
+    .subtitle {
+      color: #9da4b3;
+      margin-bottom: 20px;
+    }
+
+    .card {
+      background: #151922;
+      border: 1px solid #292f3b;
+      border-radius: 18px;
+      padding: 16px;
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      margin: 12px 0 7px;
+      color: #b7bfce;
+      font-size: 14px;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 13px;
+      border-radius: 11px;
+      border: 1px solid #343b49;
+      background: #0d1016;
+      color: white;
+      font-size: 15px;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      margin-top: 12px;
+      border: none;
+      border-radius: 11px;
+      font-weight: bold;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    .main-button {
+      background: white;
+      color: #080a0e;
+    }
+
+    .download {
+      background: #27d17f;
+      color: #06140d;
+    }
+
+    .video {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      margin-top: 15px;
+      border-radius: 13px;
+      overflow: hidden;
+      background: #050608;
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .status {
+      margin-top: 10px;
+      color: #9da4b3;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .result {
+      border: 1px dashed #3b4352;
+      border-radius: 13px;
+      padding: 14px;
+      margin-top: 15px;
+    }
+
+    @media(max-width:500px) {
+      .container {
+        padding: 15px 11px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <h1>🎬 ClipForge</h1>
+  <div class="subtitle">
+    YouTube Clip Editor
+  </div>
+
+  <div class="card">
+
+    <h3>1. Masukkan Video</h3>
+
+    <label>Link YouTube</label>
+
+    <input
+      id="youtubeUrl"
+      type="text"
+      placeholder="https://youtube.com/watch?v=..."
+    >
+
+    <button class="main-button" onclick="loadVideo()">
+      ▶️ Tampilkan Video
+    </button>
+
+    <div id="status" class="status">
+      Masukkan link YouTube terlebih dahulu.
+    </div>
+
+    <div id="videoContainer" class="video">
+      <div style="
+        height:100%;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        color:#777;
+      ">
+        Preview video
+      </div>
+    </div>
+
+  </div>
+
+
+  <div class="card">
+
+    <h3>2. Atur Clip</h3>
+
+    <div class="row">
+
+      <div>
+        <label>Mulai (detik)</label>
+        <input
+          id="start"
+          type="number"
+          min="0"
+          value="0"
+        >
+      </div>
+
+      <div>
+        <label>Selesai (detik)</label>
+        <input
+          id="end"
+          type="number"
+          min="1"
+          value="15"
+        >
+      </div>
+
+    </div>
+
+
+    <label>Kualitas</label>
+
+    <select id="quality">
+
+      <option value="720p">
+        720p HD
+      </option>
+
+      <option value="1080p">
+        1080p Full HD
+      </option>
+
+    </select>
+
+
+    <label>Format</label>
+
+    <select id="format">
+
+      <option value="16:9">
+        16:9 YouTube
+      </option>
+
+      <option value="9:16">
+        9:16 Shorts
+      </option>
+
+      <option value="1:1">
+        1:1
+      </option>
+
+    </select>
+
+
+    <button
+      class="main-button"
+      onclick="createClip()"
+    >
+      ✂️ Buat Clip
+    </button>
+
+    <div id="processStatus" class="status"></div>
+
+  </div>
+
+
+  <div
+    id="result"
+    class="card hidden"
+  >
+
+    <h3>3. Hasil Clip</h3>
+
+    <div class="result">
+
+      <div id="resultInfo" class="status">
+      </div>
+
+      <div class="video">
+
+        <video
+          id="resultVideo"
+          controls
+          playsinline
+          style="
+            width:100%;
+            height:100%;
+            background:#000;
+          "
+        ></video>
+
+      </div>
+
+      <button
+        id="downloadButton"
+        class="download"
+        disabled
+      >
+        ⬇️ Download Clip MP4
+      </button>
+
+      <div class="status">
+        Setelah backend dipasang, tombol ini akan
+        mengunduh hasil clip ke HP.
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<script>
+
+function getYouTubeId(url) {
+
+  try {
+
+    const link = new URL(url);
+
+    if (link.hostname.includes("youtu.be")) {
+      return link.pathname.substring(1);
+    }
+
+    if (link.hostname.includes("youtube.com")) {
+
+      if (link.pathname.includes("/shorts/")) {
+        return link.pathname.split("/shorts/")[1];
+      }
+
+      return link.searchParams.get("v");
+    }
+
+  } catch (error) {
+
+    return null;
+
+  }
+
+  return null;
+}
+
+
+function loadVideo() {
+
+  const url =
+    document.getElementById("youtubeUrl").value;
+
+  const id = getYouTubeId(url);
+
+  if (!id) {
+
+    document.getElementById("status").innerText =
+      "❌ Link YouTube tidak valid.";
+
+    return;
+
+  }
+
+  document.getElementById("videoContainer").innerHTML = `
+
+    <iframe
+      src="https://www.youtube.com/embed/${id}"
+      allowfullscreen>
+    </iframe>
+
+  `;
+
+  document.getElementById("status").innerText =
+    "✅ Video berhasil dimuat.";
+
+}
+
+
+function createClip() {
+
+  const start =
+    Number(document.getElementById("start").value);
+
+  const end =
+    Number(document.getElementById("end").value);
+
+  const quality =
+    document.getElementById("quality").value;
+
+  const format =
+    document.getElementById("format").value;
+
+
+  if (end <= start) {
+
+    alert(
+      "Waktu selesai harus lebih besar dari waktu mulai."
+    );
+
+    return;
+
+  }
+
+
+  document
+    .getElementById("result")
+    .classList.remove("hidden");
+
+
+  document
+    .getElementById("resultInfo")
+    .innerText =
+      `Durasi ${start}s - ${end}s • ${quality} • ${format}`;
+
+
+  document
+    .getElementById("processStatus")
+    .innerText =
+      "⚠️ Backend pemrosesan video belum dipasang.";
+
+}
+
+</script>
+
+</body>
+  </html>
